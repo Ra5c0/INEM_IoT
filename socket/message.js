@@ -9,6 +9,19 @@ var mon_tableau_sequence_attendue = [0, 1, 2, 3,-1,-1,-1,-1,-1,-1,
 var pointeur_tableau_attendue = 0
 var longueur_sequence_attendue = 4
 
+var adrss_broadcast = "FFFFFFFFFFFFFFFF"
+var adrss_joueur1   = "0000000000000001"
+var adrss_joueur2   = "0000000000000002"
+
+module.exports.set_adress_joueur = function(nouvelle_adresse, joueur) {
+    if (joueur == 1) {
+        adrss_joueur1 = joueur;
+    }
+    else {
+        adrss_joueur2 = joueur;
+    }
+}
+
 
 
 module.exports.var_tab = function () { return mon_tableau_sequence_attendue }
@@ -80,11 +93,17 @@ module.exports.simple_nex_button_pressed = function (etat_presse) {
     }
 }
 
+// Par defaut, en broadcast
+module.exports.change_master = function (commande, parametre, destinataire = 0) {
+    var mon_destinataire
+    if (destinataire==1) {mon_destinataire = adrss_joueur1;}
+    else if (destinataire==2) {mon_destinataire = adrss_joueur2;}
+    else {mon_destinataire = adrss_broadcast;}
 
-module.exports.change_master = function (commande, parametre) {
+
     ma_commande = {
         type: C.FRAME_TYPE.REMOTE_AT_COMMAND_REQUEST,
-        destination64: "FFFFFFFFFFFFFFFF",
+        destination64: mon_destinataire,
         command: commande,
         commandParameter: [parametre]
     }
