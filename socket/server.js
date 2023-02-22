@@ -15,6 +15,7 @@ var xbeeAPI = new xbee_api.XBeeAPI({
 });
 
 var joueur_actuel = 1;
+var game_is_running = 1;
 
 let serialport = new SerialPort(SERIAL_PORT, {
   baudRate: parseInt(process.env.SERIAL_BAUDRATE) ,
@@ -28,6 +29,14 @@ serialport.pipe(xbeeAPI.parser);
 xbeeAPI.builder.pipe(serialport);
 
 //message.change_etat_led();
+function protocole_joueur_echec() {
+  // Ajouter point ou quoi que ce soit ici
+  // TODO
+  // Balise
+  // Pipeline
+}
+
+
 
 serialport.on("open", function () {
   var frame_obj = { // AT Request to be sent
@@ -74,13 +83,14 @@ async function affiche_simon() {
   for (let index = 0; index < longueur; index++) {
     const element = message.retourne_numero_pin_led(tableau[index]);
 
-    console.log("Pin " + element + " allumer")
-    xbeeAPI.builder.write(message.change_master(element, 0x05))
+    //console.log("Pin " + element + " allumer")
+    xbeeAPI.builder.write(message.change_master(element, 0x05, joueur_actuel))
     await message.sleep(300)
-    console.log("Pin " + element + " eteindre")
-    console.log(message.change_master(element, 0x04));
-    xbeeAPI.builder.write(message.change_master(element, 0x04))
-    xbeeAPI.builder.write(message.change_master(element, 0x04))
+    //console.log("Pin " + element + " eteindre")
+    // Je ne sais pas pourquoi 1->0 et 2->2, mais ça marche, donc pas touche
+    console.log(message.change_master(element, 0x04, joueur_actuel));
+    xbeeAPI.builder.write(message.change_master(element, 0x04, joueur_actuel))
+    xbeeAPI.builder.write(message.change_master(element, 0x04, joueur_actuel))
     await message.sleep(60)
 
     console.log("-->")
@@ -91,9 +101,9 @@ async function affiche_simon() {
 
 async function allume_led(numero_led) {
   const element = message.retourne_numero_pin_led(numero_led)
-  xbeeAPI.builder.write(message.change_master(element, 0x05))
+  xbeeAPI.builder.write(message.change_master(element, 0x05, joueur_actuel))
   await message.sleep(200)
-  xbeeAPI.builder.write(message.change_master(element, 0x04))
+  xbeeAPI.builder.write(message.change_master(element, 0x04, joueur_actuel))
 }
 
 // All frames parsed by the XBee will be emitted here
@@ -126,7 +136,6 @@ xbeeAPI.parser.on("data", function (frame) {
   } else if (C.FRAME_TYPE.ZIGBEE_IO_DATA_SAMPLE_RX === frame.type) {
     //TODO Really important: find a way to only read data from awaited players
     
-
     state_buttons = message.receptionne_etat_bouton_retourne_nouv_presse(
       frame.digitalSamples.DIO0,
       frame.digitalSamples.DIO1,
@@ -141,6 +150,7 @@ xbeeAPI.parser.on("data", function (frame) {
         allume_led(1)
         allume_led(2)
         allume_led(3)
+        game_is_running = 0; // TODO implement here
       }
       else {
         allume_led(state_buttons)
