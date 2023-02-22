@@ -14,6 +14,8 @@ var xbeeAPI = new xbee_api.XBeeAPI({
   api_mode: 2
 });
 
+var joueur_actuel = 1;
+
 let serialport = new SerialPort(SERIAL_PORT, {
   baudRate: parseInt(process.env.SERIAL_BAUDRATE) ,
 }, function (err) {
@@ -122,7 +124,7 @@ xbeeAPI.parser.on("data", function (frame) {
     // storage.registerSensor(frame.remote64)
 
   } else if (C.FRAME_TYPE.ZIGBEE_IO_DATA_SAMPLE_RX === frame.type) {
-
+    //TODO Really important: find a way to only read data from awaited players
     
 
     state_buttons = message.receptionne_etat_bouton_retourne_nouv_presse(
@@ -130,8 +132,10 @@ xbeeAPI.parser.on("data", function (frame) {
       frame.digitalSamples.DIO1,
       frame.digitalSamples.DIO2,
       frame.digitalSamples.DIO3)
+    
     if (message.simple_nex_button_pressed(state_buttons)) {
       return_info_after_pressed = message.jeu_bouton_presse(state_buttons)
+      // -1 Si le joueur a échoué
       if (return_info_after_pressed == -1) {
         allume_led(0)
         allume_led(1)
@@ -141,6 +145,9 @@ xbeeAPI.parser.on("data", function (frame) {
       else {
         allume_led(state_buttons)
         if (return_info_after_pressed==1) {
+          // On vient de rentrer une nouvelle valeur pour la sequence
+          // On change donc de joueur
+          joueur_actuel = (joueur_actuel % 2) + 1;
           affiche_simon()
         }
       }
