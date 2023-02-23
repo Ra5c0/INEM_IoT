@@ -2,16 +2,18 @@ var SerialPort = require('serialport');
 var xbee_api = require('xbee-api');
 var C = xbee_api.constants;
 
-var tableau_etats_boutons = [0, 0, 0, 0]
+var tableau_etats_boutons = [0, 0, 0, 0];
 var mon_tableau_sequence_attendue = [0, 1, 2, 3,-1,-1,-1,-1,-1,-1,
                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
                                     -1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-var pointeur_tableau_attendue = 0
-var longueur_sequence_attendue = 4
+var pointeur_tableau_attendue = 0;
+var longueur_sequence_attendue = 4;
 
-var adrss_broadcast = "FFFFFFFFFFFFFFFF"
-var adrss_joueur1   = "0000000000000001"
-var adrss_joueur2   = "0000000000000002"
+var tt1 = "0013A20041FB76EA";
+var tt2 = "0013A20041A72961";
+var adrss_broadcast = tt1; //"FFFFFFFFFFFFFFFF";
+var adrss_joueur1   = tt1; //"FFFFFFFFFFFFFFFF";
+var adrss_joueur2   = tt2; //"0000000000000002";
 
 module.exports.set_adress_joueur = function(nouvelle_adresse, joueur) {
     if (joueur == 1) {
@@ -19,6 +21,15 @@ module.exports.set_adress_joueur = function(nouvelle_adresse, joueur) {
     }
     else {
         adrss_joueur2 = joueur;
+    }
+}
+
+module.exports.get_adress_joueur = function(joueur) {
+    if (joueur == 1) {
+        return adrss_joueur1;
+    }
+    else {
+        return adrss_joueur2;
     }
 }
 
@@ -35,19 +46,19 @@ module.exports.var_tab_long = function () { return longueur_sequence_attendue }
 module.exports.jeu_bouton_presse = function (nouv_bouton_presse) {
     //console.log(">>"+pointeur_tableau_attendue+">>")
     if (pointeur_tableau_attendue == longueur_sequence_attendue) {
-        mon_tableau_sequence_attendue[pointeur_tableau_attendue] = nouv_bouton_presse
-        longueur_sequence_attendue = longueur_sequence_attendue + 1
-        pointeur_tableau_attendue = 0
+        mon_tableau_sequence_attendue[pointeur_tableau_attendue] = nouv_bouton_presse;
+        longueur_sequence_attendue = longueur_sequence_attendue + 1;
+        pointeur_tableau_attendue = 0;
 
         return 1
     }
     if (mon_tableau_sequence_attendue[pointeur_tableau_attendue] == nouv_bouton_presse) {
-        pointeur_tableau_attendue = pointeur_tableau_attendue + 1
-        return 0
+        pointeur_tableau_attendue = pointeur_tableau_attendue + 1;
+        return 0;
     }
-    pointeur_tableau_attendue = 0
-    longueur_sequence_attendue = 4
-    return -1
+    pointeur_tableau_attendue = 0;
+    longueur_sequence_attendue = 4;
+    return -1;
 
 }
 
@@ -59,7 +70,7 @@ module.exports.jeu_bouton_presse = function (nouv_bouton_presse) {
     //TODO Refactorer en utilisant un tableau serait mieux
 */
 module.exports.receptionne_etat_bouton_retourne_nouv_presse = function (b0, b1, b2, b3) {
-    bouton_presse = -1
+    bouton_presse = -1;
     if ((b0 == 1) && (tableau_etats_boutons[0] == 0)) {
         bouton_presse = 0;
     }
@@ -86,16 +97,16 @@ module.exports.receptionne_etat_bouton_retourne_nouv_presse = function (b0, b1, 
 */
 module.exports.simple_nex_button_pressed = function (etat_presse) {
     if (etat_presse >= 0) {
-        return 1
+        return 1;
     }
     else {
-        return 0
+        return 0;
     }
 }
 
 // Par defaut, en broadcast
 module.exports.change_master = function (commande, parametre, destinataire = 0) {
-    var mon_destinataire
+    var mon_destinataire;
     if (destinataire==1) {mon_destinataire = adrss_joueur1;}
     else if (destinataire==2) {mon_destinataire = adrss_joueur2;}
     else {mon_destinataire = adrss_broadcast;}
@@ -107,7 +118,7 @@ module.exports.change_master = function (commande, parametre, destinataire = 0) 
         command: commande,
         commandParameter: [parametre]
     }
-    return ma_commande
+    return ma_commande;
 };
 
 module.exports.sleep = function (ms) {
@@ -117,15 +128,13 @@ module.exports.sleep = function (ms) {
 module.exports.retourne_numero_pin_led = function (numero) {
     switch (numero) {
         case 0:
-            return "D4"
+            return "D4";
         case 1:
-            return "D5"
+            return "D5";
         case 2:
-            return "D7"
+            return "D7";
         case 3:
-            return "P1"
-
-
+            return "P1";
         default:
             break;
     }
