@@ -56,19 +56,29 @@ serialport.on("open", function () {
   xbeeAPI.builder.write(frame_obj);
 
   // --- Initialisation ------------
-  xbeeAPI.builder.write(message.change_master("D0", 0x03));
-  xbeeAPI.builder.write(message.change_master("D1", 0x03));
-  xbeeAPI.builder.write(message.change_master("D2", 0x03));
-  xbeeAPI.builder.write(message.change_master("D3", 0x03));
+  xbeeAPI.builder.write(message.change_master("D0", 0x03, 1));
+  xbeeAPI.builder.write(message.change_master("D0", 0x03, 2));
+  xbeeAPI.builder.write(message.change_master("D1", 0x03, 1));
+  xbeeAPI.builder.write(message.change_master("D1", 0x03, 2));
+  xbeeAPI.builder.write(message.change_master("D2", 0x03, 1));
+  xbeeAPI.builder.write(message.change_master("D2", 0x03, 2));
+  xbeeAPI.builder.write(message.change_master("D3", 0x03, 1));
+  xbeeAPI.builder.write(message.change_master("D3", 0x03, 2));
+  
 
 
-  xbeeAPI.builder.write(message.change_master("P1", 0x04));
-  xbeeAPI.builder.write(message.change_master("D5", 0x04));
-  xbeeAPI.builder.write(message.change_master("D4", 0x04));
-  xbeeAPI.builder.write(message.change_master("D7", 0x04));
+  xbeeAPI.builder.write(message.change_master("P1", 0x04, 1));
+  xbeeAPI.builder.write(message.change_master("P1", 0x04, 2));
+  xbeeAPI.builder.write(message.change_master("D5", 0x04, 1));
+  xbeeAPI.builder.write(message.change_master("D5", 0x04, 2));
+  xbeeAPI.builder.write(message.change_master("D4", 0x04, 1));
+  xbeeAPI.builder.write(message.change_master("D4", 0x04, 2));
+  xbeeAPI.builder.write(message.change_master("D7", 0x04, 1));
+  xbeeAPI.builder.write(message.change_master("D7", 0x04, 2));
 
 
-  xbeeAPI.builder.write(message.change_master("IC", 0x0F));
+  xbeeAPI.builder.write(message.change_master("IC", 0x0F, 1));
+  xbeeAPI.builder.write(message.change_master("IC", 0x0F, 2));
 
   affiche_simon()
 
@@ -88,7 +98,7 @@ async function affiche_simon() {
     await message.sleep(300)
     //console.log("Pin " + element + " eteindre")
     // Je ne sais pas pourquoi 1->0 et 2->2, mais ça marche, donc pas touche
-    console.log(message.change_master(element, 0x04, joueur_actuel));
+    //console.log(message.change_master(element, 0x04, joueur_actuel));
     xbeeAPI.builder.write(message.change_master(element, 0x04, joueur_actuel))
     xbeeAPI.builder.write(message.change_master(element, 0x04, joueur_actuel))
     await message.sleep(60)
@@ -134,8 +144,10 @@ xbeeAPI.parser.on("data", function (frame) {
     // storage.registerSensor(frame.remote64)
 
   } else if (C.FRAME_TYPE.ZIGBEE_IO_DATA_SAMPLE_RX === frame.type) {
-    //TODO Really important: find a way to only read data from awaited players
-    
+
+    // Si c'est le joueur dont c'est le tour
+    console.log(frame.remote64.toUpperCase + " : " + message.get_adress_joueur(joueur_actuel).toUpperCase()+" : " + (frame.remote64.toUpperCase() == message.get_adress_joueur(joueur_actuel).toUpperCase()));
+    if (frame.remote64.toUpperCase() == message.get_adress_joueur(joueur_actuel).toUpperCase()) {
     state_buttons = message.receptionne_etat_bouton_retourne_nouv_presse(
       frame.digitalSamples.DIO0,
       frame.digitalSamples.DIO1,
@@ -153,20 +165,25 @@ xbeeAPI.parser.on("data", function (frame) {
         game_is_running = 0; // TODO implement here
       }
       else {
-        allume_led(state_buttons)
         if (return_info_after_pressed==1) {
           // On vient de rentrer une nouvelle valeur pour la sequence
           // On change donc de joueur
           joueur_actuel = (joueur_actuel % 2) + 1;
           affiche_simon()
         }
+        else {
+          // On n'allume pas pour la derniere, autrement, elle resterait allumé
+          allume_led(state_buttons);
+        }
       }
     }
+  }
 
     // storage.registerSample(frame.remote64,frame.analogSamples.AD0 )
 
   } else if (C.FRAME_TYPE.REMOTE_COMMAND_RESPONSE === frame.type) {
     console.log("REMOTE_COMMAND_RESPONSE")
+    console.log(frame);
   } else {
     console.debug(frame);
     let dataReceived = String.fromCharCode.apply(null, frame.commandData)
